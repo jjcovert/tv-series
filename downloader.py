@@ -11,11 +11,6 @@ from bs4 import BeautifulSoup
 from multiprocessing.dummy import Pool as ThreadPool
 
 test_run = True
-gmail_username = ""
-gmail_password = ""
-gmail_from_address = "Example <example@example.com>"
-gmail_to_address = "Example <example@example.com>"
-user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
 
 def load_config():
     config = ""
@@ -25,7 +20,7 @@ def load_config():
 
 def parse_episodes_for_season(season_url, row_identifier):
     episodes = []
-    headers = { 'User-Agent': user_agent }
+    headers = { 'User-Agent': config['user_agent'] }
     response = requests.get(season_url, headers=headers)
     soup = BeautifulSoup(response.text, "lxml")
     table = soup.find('tbody')
@@ -41,7 +36,7 @@ def parse_episodes_for_season(season_url, row_identifier):
 def parse_seasons_for_series(season_list):
     seasons = []
     row_identifier = 's'
-    headers = { 'User-Agent': user_agent }
+    headers = { 'User-Agent': config['user_agent'] }
     response = requests.get(season_list, headers=headers)
     soup = BeautifulSoup(response.text, "lxml")
     table = soup.find('tbody')
@@ -81,8 +76,10 @@ def get_episodes_for_series(config, series):
 
 def send_notification(episode):
     m = message.Message()
-    m.add_header('from', gmail_from_address)
-    m.add_header('to', gmail_to_address)
+
+    gmail_config = config['gmail_config']
+    m.add_header('from', gmail_config['from_addr'])
+    m.add_header('to', gmail_config['to_addr'])
     m.add_header('subject', "New " + episode['series']  + " episode downloaded!")
 
     body = episode['series'] + " (" + episode['season'] + ")\n"
@@ -92,8 +89,8 @@ def send_notification(episode):
 
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login(gmail_username, gmail_password)
-    server.sendmail(gmail_from_address, gmail_to_address, m.as_string())
+    server.login(gmail_config['username'], gmail_config['password'])
+    server.sendmail(gmail_config['from_addr'], gmail_config['to_addr'], m.as_string())
     server.quit()
 
 def download_episode(episode):
@@ -109,14 +106,20 @@ def download_episode(episode):
     if not exists:
         if not test_run:
             urllib.urlretrieve(url, path)
-            send_notification(episode)
+            exists = os.path.exists(path)
+            if exists:
+                send_notification(episode)
         else:
             time.sleep(2)
     queue.remove(episode)
 
+config = load_config()
+
 queue = []
 while True:
     config = load_config()
+
+
     if not test_run:
         dl_threads = config['concurrent_dl']
     else:
