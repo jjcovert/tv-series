@@ -10,7 +10,7 @@ from email import message
 from bs4 import BeautifulSoup
 from multiprocessing.dummy import Pool as ThreadPool
 
-test_run = True
+test_run = False
 
 def load_config():
     config = ""
