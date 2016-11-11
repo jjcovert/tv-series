@@ -11,7 +11,9 @@ from multiprocessing.dummy import Pool as ThreadPool
 test_run = True
 gmail_username = ""
 gmail_password = ""
-
+gmail_from_address = "Example <example@example.com>"
+gmail_to_address = "Example <example@example.com>"
+user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
 
 def load_config():
     config = ""
@@ -21,7 +23,7 @@ def load_config():
 
 def parse_episodes_for_season(season_url, row_identifier):
     episodes = []
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+    headers = { 'User-Agent': user_agent }
     response = requests.get(season_url, headers=headers)
     soup = BeautifulSoup(response.text, "lxml")
     table = soup.find('tbody')
@@ -37,7 +39,7 @@ def parse_episodes_for_season(season_url, row_identifier):
 def parse_seasons_for_series(season_list):
     seasons = []
     row_identifier = 's'
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+    headers = { 'User-Agent': user_agent }
     response = requests.get(season_list, headers=headers)
     soup = BeautifulSoup(response.text, "lxml")
     table = soup.find('tbody')
@@ -50,15 +52,12 @@ def parse_seasons_for_series(season_list):
     return seasons
 
 def get_episodes_for_series(config, series):
-
     episodes = []
-
     title = series['title']
     row_identifier = series['row_identifier']
     quality_folder = series['quality_folder']
     base_url = config['base_url']
     base_fs_path = config['base_fs_path']
-
     season_list_url = base_url + title + "/"
 
     seasons = parse_seasons_for_series(season_list_url)
@@ -79,15 +78,10 @@ def get_episodes_for_series(config, series):
     return episodes
 
 def send_notification(episode):
-
-    from_addr = 'Jessie <hashtagjim@gmail.com>'
-    to_addr  = 'Jim Covert <covert.james@gmail.com>'
-    subject = "New " + episode['series']  + " episode downloaded!"
-
     m = message.Message()
-    m.add_header('from', from_addr)
-    m.add_header('to', to_addr)
-    m.add_header('subject', subject)
+    m.add_header('from', gmail_from_address)
+    m.add_header('to', gmail_to_address)
+    m.add_header('subject', "New " + episode['series']  + " episode downloaded!")
 
     body = episode['series'] + " (" + episode['season'] + ")\n"
     body = body + "\t" + episode['path'] + "\n"
@@ -97,11 +91,10 @@ def send_notification(episode):
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
     server.login(gmail_username, gmail_password)
-    server.sendmail(from_addr, to_addr, m.as_string())
+    server.sendmail(gmail_from_address, gmail_to_address, m.as_string())
     server.quit()
 
 def download_episode(episode):
-
     url = episode['url']
     path = episode['path']
 
@@ -117,7 +110,6 @@ def download_episode(episode):
             send_notification(episode)
         else:
             time.sleep(2)
-
     queue.remove(episode)
 
 queue = []
