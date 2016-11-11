@@ -1,0 +1,22 @@
+{
+	"base_url": "http://s1.bia2m.biz/Series/",
+	"series": [
+		{
+			"title": "Black Mirror",
+			"row_identifier": "Mirror",
+			"quality_folder": ""
+		},
+		{
+			"title": "Stranger Things",
+			"row_identifier": "720p",
+			"quality_folder": "720p/"
+		},
+		{
+			"title": "Westworld",
+			"row_identifier": "720p x265",
+			"quality_folder": ""
+		}
+	],
+	"concurrent_dl": 2,
+	"base_fs_path": "/home/jcovert/Downloads/TV/"
+}
