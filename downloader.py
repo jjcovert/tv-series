@@ -111,21 +111,19 @@ def download_episode(episode):
                 send_notification(episode)
         else:
             time.sleep(2)
+    else:
+        print "File exists, skipping"
     queue.remove(episode)
 
-config = load_config()
-
-queue = []
-while True:
+if __name__ == "__main__":
     config = load_config()
-
-
     if not test_run:
         dl_threads = config['concurrent_dl']
     else:
         dl_threads = 1
     pool = ThreadPool(dl_threads)
 
+    queue = []
     series_configs = config['series']
     for series in series_configs:
         print "Enumerating:  " + series['title']
@@ -143,5 +141,3 @@ while True:
 
     pool.close()
     pool.join()
-
-    time.sleep(3600)
